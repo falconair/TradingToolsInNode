@@ -83,21 +83,37 @@ const server = net.createServer((socket) => {
 
         heartbeater.write(fix_session.toFIXString(ack));
 
-        //just fill everything
-        const fill = fix_session.create_msg(msgs['ExecutionReport']);
-        fill.set(fields['ExecID'],fix_session.execid_counter.next());
-        fill.set(fields['OrderID'],orderid);
-        fill.set(fields['ClOrdID'],fixmap.get(fields['ClOrdID']));
-        fill.set(fields['ExecType'], enums[fields['ExecType']]['FILL']);
-        fill.set(fields['ExecTransType'], enums[fields['ExecTransType']]['NEW']);
-        fill.set(fields['OrdStatus'], enums[fields['OrdStatus']]['FILLED']);
-        fill.set(fields['Side'], fixmap.get(fields['Side']));
-        fill.set(fields['Symbol'], fixmap.get(fields['Symbol']));
-        fill.set(fields['LeavesQty'], '0');
-        fill.set(fields['CumQty'], fixmap.get(fields['OrderQty']));
-        fill.set(fields['AvgPx'], '10');//execute everything at $10
+        //send 100 fills
+        const fillcount = 10;
+        const qty = parseInt(fixmap.get(fields['OrderQty']),10);
+        const eachfill = qty/fillcount;
 
-        heartbeater.write(fix_session.toFIXString(fill));
+        let leaves = qty;
+        let cumqty = 0;
+
+        for(let i = 1; i < fillcount; i++){
+          const fill = fix_session.create_msg(msgs['ExecutionReport']);
+
+          cumqty = eachfill * i;
+          leaves = qty - cumqty;
+
+          fill.set(fields['ExecID'],fix_session.execid_counter.next());
+          fill.set(fields['OrderID'],orderid);
+          fill.set(fields['ClOrdID'],fixmap.get(fields['ClOrdID']));
+          fill.set(fields['ExecType'], enums[fields['ExecType']]['PARTIAL_FILL']);//FILL
+          fill.set(fields['ExecTransType'], enums[fields['ExecTransType']]['NEW']);
+          fill.set(fields['OrdStatus'], enums[fields['OrdStatus']]['PARTIALLY_FILLED']);//FILLED
+          fill.set(fields['Side'], fixmap.get(fields['Side']));
+          fill.set(fields['Symbol'], fixmap.get(fields['Symbol']));
+          fill.set(fields['LeavesQty'], leaves);
+          fill.set(fields['CumQty'], cumqty);
+          fill.set(fields['LastShares'], eachfill);
+          fill.set(fields['AvgPx'], '10');//execute everything at $10
+
+          const outgoing = fix_session.toFIXString(fill);
+          heartbeater.write(outgoing);
+
+        }
       }
 
   });

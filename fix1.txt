@@ -1,0 +1,16 @@
+      if(FIXSession.isMsgType(fixmap, msgs["NewOrderSingle"])){
+        const orderid = fix_session.orderid_counter.next();
+        const ack = fix_session.create_msg(msgs['ExecutionReport']);
+        ack.set(fields['ExecID'],fix_session.execid_counter.next());
+        ack.set(fields['OrderID'],orderid);
+        ack.set(fields['ClOrdID'],fixmap.get(fields['ClOrdID']));
+        ack.set(fields['ExecType'], enums[fields['ExecType']]['NEW']);
+        ack.set(fields['ExecTransType'], enums[fields['ExecTransType']]['NEW']);
+        ack.set(fields['OrdStatus'], enums[fields['OrdStatus']]['NEW']);
+        ack.set(fields['Side'], fixmap.get(fields['Side']));
+        ack.set(fields['Symbol'], fixmap.get(fields['Symbol']));
+        ack.set(fields['LeavesQty'], fixmap.get(fields['OrderQty']));
+        ack.set(fields['CumQty'], '0');
+        ack.set(fields['AvgPx'], '10');//execute everything at $10
+        heartbeater.write(fix_session.toFIXString(ack));
+      }

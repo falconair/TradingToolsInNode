@@ -10,8 +10,6 @@ const Heartbeater = require('./Heartbeater.js');
 
 const msgs   = require('./msgs42.json');
 const fields = require('./fields42.json');
-const enums  = require('./enums42.json');
-const fix42  = require('./msgs_detail_42.json');
 
 const fix_session = new FIXSession( "FIX.4.2", 'SENDER', 'TARGET');
 const heartbeater = new Heartbeater(fix_session);
@@ -26,12 +24,10 @@ heartbeater
 
 socket
   .pipe(new RegexFrameDecoder(/(8=.+?\x0110=\d\d\d\x01)/g))
+  .pipe(new stream.Transform({transform(chunk,e,cb){console.log("INCOMING:"+chunk.toString());cb(null,chunk);}}))
   .on('data', (data)=>{
     const fix = data.toString();
     const fixmap = FIXSession.toMap(fix);
-
-    //console.log("INCOMING:"+Array.from(fixmap));
-    console.log("INCOMING:"+fix);
 
     if(FIXSession.isMsgType(fixmap, msgs["Logon"])){
       //kick off heartbeats

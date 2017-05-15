@@ -1,0 +1,16 @@
+      if(FIXSession.isMsgType(fixmap, msgs["NewOrderSingle"])){
+        const orderid = fix_session.orderid_counter.next();
+        const ack = fix_session.create_msg('8');
+        ack.set('17',fix_session.execid_counter.next());
+        ack.set('37',orderid);
+        ack.set('11',fixmap.get(fields['ClOrdID']));
+        ack.set('150', '0');
+        ack.set('20', '0');
+        ack.set('39', '0');
+        ack.set('54', fixmap.get('54'));
+        ack.set('55', fixmap.get('55'));
+        ack.set('151', fixmap.get('38'));
+        ack.set('14', '0');
+        ack.set('6', '10');//execute everything at $10
+        heartbeater.write(fix_session.toFIXString(ack));
+      }
